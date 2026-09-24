@@ -1,0 +1,52 @@
+name: Build and Push Docker Image to Artifact Registry
+
+on:
+  push:
+    branches:
+      - main
+
+env:
+  GCP_PROJECT_ID: "algeco-450613"
+  GCP_REGION: "europe-west1"
+  ARTIFACT_REGISTRY_REPO: "agentdemo"
+  IMAGE_NAME: "data-agent"
+  WIF_PROVIDER: "projects/535787173179/locations/global/workloadIdentityPools/github-pool/providers/github-provider"
+  WIF_SERVICE_ACCOUNT: "github-actions-sa@algeco-450613.iam.gserviceaccount.com"
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Checkout du code
+        uses: actions/checkout@v4
+
+      - name: Authentification auprès de GCP
+        id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ env.WIF_PROVIDER }}
+          service_account: ${{ env.WIF_SERVICE_ACCOUNT }}
+
+      - name: Configurer l'accès Docker à GCP Artifact Registry
+        run: |
+          gcloud auth configure-docker ${{ env.GCP_REGION }}-docker.pkg.dev --quiet
+
+      - name: Build et Tag de l'image Docker
+        run: |
+          TAG="${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.ARTIFACT_REGISTRY_REPO }}/${{ env.IMAGE_NAME }}:${{ github.sha }}"
+          TAG_LATEST="${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.ARTIFACT_REGISTRY_REPO }}/${{ env.IMAGE_NAME }}:latest"
+          
+          docker build -t $TAG -t $TAG_LATEST .
+
+      - name: Push de l'image sur Artifact Registry
+        run: |
+          TAG="${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.ARTIFACT_REGISTRY_REPO }}/${{ env.IMAGE_NAME }}:${{ github.sha }}"
+          TAG_LATEST="${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.ARTIFACT_REGISTRY_REPO }}/${{ env.IMAGE_NAME }}:latest"
+          
+          docker push $TAG
+          docker push $TAG_LATEST
