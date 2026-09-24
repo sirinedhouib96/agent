@@ -8,7 +8,7 @@ on:
 env:
   GCP_PROJECT_ID: "algeco-450613"
   GCP_REGION: "europe-west1"
-  ARTIFACT_REGISTRY_REPO: "agentdemo"
+  ARTIFACT_REGISTRY_REPO: "europe-west9-docker.pkg.dev/algeco-450613/agentdemo"
   IMAGE_NAME: "data-agent"
   WIF_PROVIDER: "projects/535787173179/locations/global/workloadIdentityPools/github-pool/providers/github-provider"
   WIF_SERVICE_ACCOUNT: "github-actions-sa@algeco-450613.iam.gserviceaccount.com"
